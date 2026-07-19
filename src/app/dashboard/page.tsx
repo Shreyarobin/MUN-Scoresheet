@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 
 async function createConference(formData: FormData) {
   "use server";
@@ -108,19 +109,21 @@ export default async function DashboardPage() {
       <ul style={{ marginTop: 24, paddingLeft: 0, listStyle: "none" }}>
         {conferences.map((conf) => (
           <li
-            key={conf.id}
-            style={{
-              border: "1px solid #444",
-              borderRadius: 6,
-              padding: 16,
-              marginBottom: 12,
-            }}
-          >
-            <strong>{conf.name}</strong> ({conf.year})
-            <div style={{ opacity: 0.7, fontSize: 14 }}>
-              {conf.committees.length} committee(s)
-            </div>
-          </li>
+  key={conf.id}
+  style={{
+    border: "1px solid #444",
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 12,
+  }}
+>
+  <Link href={`/dashboard/${conf.id}`} style={{ color: "#fff", textDecoration: "none" }}>
+    <strong>{conf.name}</strong> ({conf.year})
+    <div style={{ opacity: 0.7, fontSize: 14 }}>
+      {conf.committees.length} committee(s)
+    </div>
+  </Link>
+</li>
         ))}
       </ul>
     </div>

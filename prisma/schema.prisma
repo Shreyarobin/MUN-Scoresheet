@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Conference {
+  id         String      @id @default(cuid())
+  name       String
+  year       Int
+  ownerId    String
+  createdAt  DateTime    @default(now())
+  committees Committee[]
+}
+
+model Committee {
+  id           String     @id @default(cuid())
+  name         String
+  conferenceId String
+  conference   Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+  countries    Country[]
+  createdAt    DateTime   @default(now())
+}
+
+model Country {
+  id          String    @id @default(cuid())
+  name        String
+  orderIndex  Int       @default(0)
+  committeeId String
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
