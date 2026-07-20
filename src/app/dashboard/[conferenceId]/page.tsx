@@ -1,33 +1,16 @@
-import { redirect, notFound } from "next/navigation";
+﻿import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import Link from "next/link";
+import { Shell } from "@/components/Shell";
+import { AddCountriesForm } from "./AddCountriesForm";
+import { deleteCountry } from "./actions";
 
-async function createCommittee(formData: FormData) {
-  "use server";
-
-  const conferenceId = formData.get("conferenceId") as string;
-  const name = formData.get("name") as string;
-
-  if (!name || !conferenceId) return;
-
-  await prisma.committee.create({
-    data: {
-      name,
-      conferenceId,
-    },
-  });
-
-  revalidatePath(`/dashboard/${conferenceId}`);
-}
-
-export default async function ConferencePage({
+export default async function CommitteePage({
   params,
 }: {
-  params: Promise<{ conferenceId: string }>;
+  params: Promise<{ conferenceId: string; committeeId: string }>;
 }) {
-  const { conferenceId } = await params;
+  const { conferenceId, committeeId } = await params;
 
   const supabase = await createClient();
   const {
@@ -38,91 +21,60 @@ export default async function ConferencePage({
     redirect("/login");
   }
 
-  const conference = await prisma.conference.findUnique({
-    where: { id: conferenceId },
-    include: { committees: true },
+  const committee = await prisma.committee.findUnique({
+    where: { id: committeeId },
+    include: {
+      conference: true,
+      countries: { orderBy: { name: "asc" } },
+    },
   });
 
-  if (!conference || conference.ownerId !== user.id) {
+  if (!committee || committee.conference.ownerId !== user.id) {
     notFound();
   }
 
-  const inputStyle: React.CSSProperties = {
-    padding: 8,
-    color: "#000",
-    background: "#fff",
-    border: "1px solid #ccc",
-    borderRadius: 4,
-  };
-
   return (
-    <div style={{ maxWidth: 700, margin: "60px auto", color: "#fff", fontFamily: "sans-serif" }}>
-      <Link href="/dashboard" style={{ color: "#8ab4f8" }}>
-        ← Back to conferences
-      </Link>
-
-      <h1 style={{ marginTop: 12 }}>
-        {conference.name} ({conference.year})
+    <Shell
+      conferenceName={committee.conference.name}
+      committeeName={committee.name}
+      conferenceId={conferenceId}
+      committeeId={committeeId}
+    >
+      <h1 className="text-2xl font-serif font-semibold text-ink mb-1">
+        Committee Setup
       </h1>
+      <p className="text-muted mb-6">
+        {committee.countries.length} countries set up
+      </p>
 
-      <form
-        action={createCommittee}
-        style={{
-          display: "flex",
-          gap: 8,
-          margin: "24px 0",
-          border: "1px solid #444",
-          borderRadius: 6,
-          padding: 16,
-        }}
-      >
-        <input type="hidden" name="conferenceId" value={conference.id} />
-        <input
-          type="text"
-          name="name"
-          placeholder="Committee name (e.g. UNSC, DISEC)"
-          required
-          style={{ ...inputStyle, flex: 1 }}
-        />
-        <button
-          type="submit"
-          style={{
-            padding: "8px 16px",
-            background: "#fff",
-            color: "#000",
-            border: "none",
-            borderRadius: 4,
-            cursor: "pointer",
-          }}
-        >
-          Add Committee
-        </button>
-      </form>
+      <AddCountriesForm conferenceId={conferenceId} committeeId={committeeId} />
 
-      {conference.committees.length === 0 && (
-        <p>No committees yet. Add your first one above.</p>
-      )}
-
-      <ul style={{ paddingLeft: 0, listStyle: "none" }}>
-        {conference.committees.map((committee) => (
-          <li
-            key={committee.id}
-            style={{
-              border: "1px solid #444",
-              borderRadius: 6,
-              padding: 16,
-              marginBottom: 12,
-            }}
-          >
-            <Link
-              href={`/dashboard/${conference.id}/${committee.id}`}
-              style={{ color: "#fff", textDecoration: "none", fontWeight: 600 }}
+      {committee.countries.length === 0 ? (
+        <p className="text-muted">No countries yet. Add your committee's roster above.</p>
+      ) : (
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {committee.countries.map((country, i) => (
+            <li
+              key={country.id}
+              className="fade-up flex items-center justify-between bg-panel border border-line rounded-shell shadow-sm px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all"
+              style={{ animationDelay: `${i * 30}ms` }}
             >
-              {committee.name} →
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+              <span className="font-medium text-ink truncate pr-2">{country.name}</span>
+              <form action={deleteCountry}>
+                <input type="hidden" name="countryId" value={country.id} />
+                <input type="hidden" name="conferenceId" value={conferenceId} />
+                <input type="hidden" name="committeeId" value={committeeId} />
+                <button
+                  type="submit"
+                  className="text-danger hover:underline text-sm font-medium shrink-0"
+                >
+                  Remove
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Shell>
   );
 }

@@ -23,13 +23,68 @@ model Committee {
   conference   Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
   countries    Country[]
   createdAt    DateTime   @default(now())
+
+  rollCallSessions RollCallSession[]
+  gslQueueEntries  GSLQueueEntry[]
 }
 
 model Country {
-  id          String    @id @default(cuid())
-  name        String
-  orderIndex  Int       @default(0)
+  id                String    @id @default(cuid())
+  name              String
+  orderIndex        Int       @default(0)
+  committeeId       String
+  committee         Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  everPresentVoting Boolean   @default(false)
+
+  rollCallEntries RollCallEntry[]
+  gslQueueEntries GSLQueueEntry[]
+}
+
+enum RollCallStatus {
+  PRESENT
+  PRESENT_VOTING
+  ABSENT
+}
+
+model RollCallSession {
+  id          String          @id @default(cuid())
   committeeId String
-  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
+  committee   Committee       @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  dayIndex    Int
+  label       String
+  committed   Boolean         @default(false)
+  committedAt DateTime?
+  createdAt   DateTime        @default(now())
+  entries     RollCallEntry[]
+
+  @@unique([committeeId, dayIndex])
+}
+
+model RollCallEntry {
+  id        String          @id @default(cuid())
+  sessionId String
+  session   RollCallSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  countryId String
+  country   Country         @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  status    RollCallStatus  @default(ABSENT)
+  updatedAt DateTime        @updatedAt
+
+  @@unique([sessionId, countryId])
+}
+
+model GSLQueueEntry {
+  id           String    @id @default(cuid())
+  committeeId  String
+  committee    Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  countryId    String
+  country      Country   @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  orderIndex   Int
+  gsl1Score    Int?
+  gsl1Verbatim String?   @db.Text
+  gsl2Score    Int?
+  gsl2Verbatim String?   @db.Text
+  createdAt    DateTime  @default(now())
+
+  @@unique([committeeId, countryId])
 }

@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #FAF8F5;
+  --panel: #FFFFFF;
+  --wash: #E9F5F3;
+  --wash2: #FCEEE7;
+
+  --ink: #201D1A;
+  --muted: #726B63;
+  --line: #E7E2DA;
+  --line2: #DCE4E2;
+
+  --primary: #14B8A6;
+  --primary-deep: #0F766E;
+  --primary-soft: #DBF3F0;
+
+  --accent: #F0653C;
+  --accent-soft: #FDE6DC;
+
+  --success: #22A559;
+  --success-soft: #DFF3E6;
+
+  --danger: #D6455B;
+  --danger-soft: #F9E1E5;
+
+  --gold: #C99A2E;
+  --gold-deep: #8A6A1D;
+  --gold-soft: #FBF0D6;
+
+  --radius: 14px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-paper: var(--paper);
+  --color-panel: var(--panel);
+  --color-wash: var(--wash);
+  --color-wash2: var(--wash2);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+
+  --color-primary: var(--primary);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-soft: var(--primary-soft);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-soft: var(--gold-soft);
+
+  --radius-shell: var(--radius);
+
+  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-public-sans);
+  --font-mono: var(--font-plex-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-public-sans), system-ui, sans-serif;
+  font-size: 14.5px;
+  line-height: 1.5;
+  background-image:
+    radial-gradient(circle at 12% -8%, #E9F5F3 0%, transparent 46%),
+    radial-gradient(circle at 105% 8%, #FCEEE7 0%, transparent 40%);
+}
+
+h1, h2 {
+  font-family: var(--font-fraunces), serif;
+  letter-spacing: 0.1px;
+}
+
+.mono {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.92em;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-up {
+  animation: fadeUp 0.35s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

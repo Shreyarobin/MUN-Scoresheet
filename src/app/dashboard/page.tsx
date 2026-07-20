@@ -1,38 +1,31 @@
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
-async function createConference(formData: FormData) {
+async function createCommittee(formData: FormData) {
   "use server";
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
+  const conferenceId = formData.get("conferenceId") as string;
   const name = formData.get("name") as string;
-  const year = parseInt(formData.get("year") as string, 10);
 
-  if (!name || !year) return;
+  if (!name || !conferenceId) return;
 
-  await prisma.conference.create({
-    data: {
-      name,
-      year,
-      ownerId: user.id,
-    },
+  await prisma.committee.create({
+    data: { name, conferenceId },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/${conferenceId}`);
 }
 
-export default async function DashboardPage() {
+export default async function ConferencePage({
+  params,
+}: {
+  params: Promise<{ conferenceId: string }>;
+}) {
+  const { conferenceId } = await params;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -42,88 +35,60 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const conferences = await prisma.conference.findMany({
-    where: { ownerId: user.id },
+  const conference = await prisma.conference.findUnique({
+    where: { id: conferenceId },
     include: { committees: true },
-    orderBy: { createdAt: "desc" },
   });
 
-  const inputStyle: React.CSSProperties = {
-    padding: 8,
-    color: "#000",
-    background: "#fff",
-    border: "1px solid #ccc",
-    borderRadius: 4,
-  };
+  if (!conference || conference.ownerId !== user.id) {
+    notFound();
+  }
 
   return (
-    <div style={{ maxWidth: 700, margin: "60px auto", color: "#fff", fontFamily: "sans-serif" }}>
-      <h1>Your Conferences</h1>
-      <p style={{ opacity: 0.7 }}>Logged in as {user.email}</p>
+    <div className="max-w-3xl mx-auto px-4 py-16">
+      <Link href="/dashboard" className="text-primary-deep font-semibold hover:underline text-sm">
+        ← Back to conferences
+      </Link>
+
+      <h1 className="text-3xl font-serif font-semibold text-ink mt-3 mb-6">
+        {conference.name} <span className="text-muted font-sans font-normal">({conference.year})</span>
+      </h1>
 
       <form
-        action={createConference}
-        style={{
-          display: "flex",
-          gap: 8,
-          margin: "24px 0",
-          border: "1px solid #444",
-          borderRadius: 6,
-          padding: 16,
-        }}
+        action={createCommittee}
+        className="flex gap-2 bg-panel border border-line rounded-shell shadow-sm p-4 mb-6"
       >
+        <input type="hidden" name="conferenceId" value={conference.id} />
         <input
           type="text"
           name="name"
-          placeholder="Conference name (e.g. MUNSoc UniCon)"
+          placeholder="Committee name (e.g. UNSC, DISEC)"
           required
-          style={{ ...inputStyle, flex: 2 }}
-        />
-        <input
-          type="number"
-          name="year"
-          placeholder="Year"
-          defaultValue={2026}
-          required
-          style={{ ...inputStyle, width: 100 }}
+          className="flex-1 px-3 py-2.5 border border-line2 rounded-lg text-ink focus:outline-none focus:ring-2 focus:ring-primary-soft focus:border-primary"
         />
         <button
           type="submit"
-          style={{
-            padding: "8px 16px",
-            background: "#fff",
-            color: "#000",
-            border: "none",
-            borderRadius: 4,
-            cursor: "pointer",
-          }}
+          className="bg-primary hover:bg-primary-deep text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
         >
-          Create
+          Add Committee
         </button>
       </form>
 
-      {conferences.length === 0 && (
-        <p style={{ marginTop: 24 }}>No conferences yet. Create your first one above.</p>
+      {conference.committees.length === 0 && (
+        <p className="text-muted">No committees yet. Add your first one above.</p>
       )}
 
-      <ul style={{ marginTop: 24, paddingLeft: 0, listStyle: "none" }}>
-        {conferences.map((conf) => (
-          <li
-  key={conf.id}
-  style={{
-    border: "1px solid #444",
-    borderRadius: 6,
-    padding: 16,
-    marginBottom: 12,
-  }}
->
-  <Link href={`/dashboard/${conf.id}`} style={{ color: "#fff", textDecoration: "none" }}>
-    <strong>{conf.name}</strong> ({conf.year})
-    <div style={{ opacity: 0.7, fontSize: 14 }}>
-      {conf.committees.length} committee(s)
-    </div>
-  </Link>
-</li>
+      <ul className="space-y-3">
+        {conference.committees.map((committee) => (
+          <li key={committee.id}>
+            <Link
+              href={`/dashboard/${conference.id}/${committee.id}`}
+              className="flex items-center justify-between bg-panel border border-line rounded-shell shadow-sm p-4 hover:border-primary-soft hover:shadow-md transition-all"
+            >
+              <span className="font-semibold text-ink">{committee.name}</span>
+              <span className="text-primary-deep">→</span>
+            </Link>
+          </li>
         ))}
       </ul>
     </div>
