@@ -36,11 +36,9 @@ export async function updateGSLScore(
   round: 1 | 2,
   score: number | null
 ) {
-  const clamped =
-    score === null ? null : Math.max(0, Math.min(10, Math.round(score)));
   await prisma.gSLQueueEntry.update({
     where: { id: entryId },
-    data: round === 1 ? { gsl1Score: clamped } : { gsl2Score: clamped },
+    data: round === 1 ? { gsl1Score: score } : { gsl2Score: score },
   });
   revalidatePath(`/dashboard/${conferenceId}/${committeeId}/gsl`);
 }
@@ -58,6 +56,7 @@ export async function updateGSLVerbatim(
   });
   revalidatePath(`/dashboard/${conferenceId}/${committeeId}/gsl`);
 }
+
 export async function resetGSLQueue(conferenceId: string, committeeId: string) {
   await prisma.gSLQueueEntry.deleteMany({ where: { committeeId } });
   revalidatePath(`/dashboard/${conferenceId}/${committeeId}/gsl`);

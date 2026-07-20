@@ -26,6 +26,8 @@ model Committee {
 
   rollCallSessions RollCallSession[]
   gslQueueEntries  GSLQueueEntry[]
+  modSessions      ModSession[]
+  pooEntries       PooEntry[]
 }
 
 model Country {
@@ -39,6 +41,8 @@ model Country {
 
   rollCallEntries RollCallEntry[]
   gslQueueEntries GSLQueueEntry[]
+  modEntries      ModEntry[]
+  pooEntries      PooEntry[]
 }
 
 enum RollCallStatus {
@@ -87,4 +91,45 @@ model GSLQueueEntry {
   createdAt    DateTime  @default(now())
 
   @@unique([committeeId, countryId])
+}
+
+model ModSession {
+  id          String     @id @default(cuid())
+  committeeId String
+  committee   Committee  @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  modNumber   Int
+  topic       String
+  createdAt   DateTime   @default(now())
+  entries     ModEntry[]
+
+  @@unique([committeeId, modNumber])
+}
+
+model ModEntry {
+  id           String     @id @default(cuid())
+  modSessionId String
+  modSession   ModSession @relation(fields: [modSessionId], references: [id], onDelete: Cascade)
+  countryId    String
+  country      Country    @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  orderIndex   Int
+  score        Int?
+  verbatim     String?    @db.Text
+  createdAt    DateTime   @default(now())
+
+  @@unique([modSessionId, countryId])
+}
+
+model PooEntry {
+  id           String    @id @default(cuid())
+  committeeId  String
+  committee    Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  countryId    String
+  country      Country   @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  poNumber     Int
+  score        Int
+  raisedDuring String
+  comments     String?   @db.Text
+  createdAt    DateTime  @default(now())
+
+  @@unique([committeeId, poNumber])
 }

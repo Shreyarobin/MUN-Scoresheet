@@ -52,6 +52,12 @@ export function GSLBoard({
     });
   };
 
+  const handleScoreChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    if (!/^-?\d*\.?\d*$/.test(ev.target.value)) {
+      ev.target.value = ev.target.value.slice(0, -1);
+    }
+  };
+
   if (queue.length === 0) return null;
 
   return (
@@ -86,10 +92,11 @@ export function GSLBoard({
                 <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted mb-1.5">
                   GSL-I
                   <input
-                    type="number"
-                    min={0}
-                    max={10}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
                     defaultValue={e.gsl1Score ?? ""}
+                    onChange={handleScoreChange}
                     onBlur={(ev) => saveScore(entry.id, 1, ev.target.value)}
                     className="w-16 text-center px-2 py-1 border border-line2 rounded-md font-mono normal-case font-semibold focus:outline-none focus:ring-2 focus:ring-primary-soft focus:border-primary"
                   />
@@ -108,10 +115,11 @@ export function GSLBoard({
                 <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted mb-1.5">
                   GSL-II
                   <input
-                    type="number"
-                    min={0}
-                    max={10}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
                     defaultValue={e.gsl2Score ?? ""}
+                    onChange={handleScoreChange}
                     onBlur={(ev) => saveScore(entry.id, 2, ev.target.value)}
                     className="w-16 text-center px-2 py-1 border border-line2 rounded-md font-mono normal-case font-semibold focus:outline-none focus:ring-2 focus:ring-primary-soft focus:border-primary"
                   />
