@@ -28,6 +28,7 @@ model Committee {
   gslQueueEntries  GSLQueueEntry[]
   modSessions      ModSession[]
   pooEntries       PooEntry[]
+  motions          Motion[]
 }
 
 model Country {
@@ -84,9 +85,9 @@ model GSLQueueEntry {
   countryId    String
   country      Country   @relation(fields: [countryId], references: [id], onDelete: Cascade)
   orderIndex   Int
-  gsl1Score    Int?
+  gsl1Score    Float?
   gsl1Verbatim String?   @db.Text
-  gsl2Score    Int?
+  gsl2Score    Float?
   gsl2Verbatim String?   @db.Text
   createdAt    DateTime  @default(now())
 
@@ -112,7 +113,7 @@ model ModEntry {
   countryId    String
   country      Country    @relation(fields: [countryId], references: [id], onDelete: Cascade)
   orderIndex   Int
-  score        Int?
+  score        Float?
   verbatim     String?    @db.Text
   createdAt    DateTime   @default(now())
 
@@ -126,10 +127,31 @@ model PooEntry {
   countryId    String
   country      Country   @relation(fields: [countryId], references: [id], onDelete: Cascade)
   poNumber     Int
-  score        Int
+  score        Float
   raisedDuring String
   comments     String?   @db.Text
   createdAt    DateTime  @default(now())
 
   @@unique([committeeId, poNumber])
+}
+
+enum MotionStatus {
+  PENDING
+  PASS
+  FAIL
+  NOT_VOTED
+}
+
+model Motion {
+  id                String       @id @default(cuid())
+  committeeId       String
+  committee         Committee    @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  dayIndex          Int
+  raisedBy          String
+  motionType        String
+  topic             String?
+  totalTimeMinutes  Float?
+  perSpeakerSeconds Float?
+  status            MotionStatus @default(PENDING)
+  createdAt         DateTime     @default(now())
 }
